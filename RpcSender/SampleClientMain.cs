@@ -16,11 +16,8 @@ namespace RpcSender
 
         private static void RunRpcMessageDemo(SampleClientService messagingService)
         {
-            String response = messagingService.SendRpcConnectMessageToQueue(Environment.MachineName + "_" +Process.GetCurrentProcess().Id, TimeSpan.FromMinutes(1));
-            Console.WriteLine("Response: {0}", response);
-            
-
-           messagingService.ReceiveRpcPongMessage();
+            messagingService.SendRpcConnectMessageToQueue(Environment.MachineName + "_" +Process.GetCurrentProcess().Id);
+           //messagingService.ReceiveRpcPongMessage();
 
         }
     }

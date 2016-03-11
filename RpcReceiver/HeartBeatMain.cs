@@ -2,12 +2,11 @@
 
 namespace RpcReceiver
 {
-    class HeaertBeatMain
+    class HeartBeatMain
     {
         static void Main(string[] args)
         {
             HeartbeatService s = new HeartbeatService();
-            s.ReceiveRpcConnectMessage();
         }
     }
 }

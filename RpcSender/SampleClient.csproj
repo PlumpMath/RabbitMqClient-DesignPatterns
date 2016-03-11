@@ -47,18 +47,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SenderMain.cs" />
+    <Compile Include="ConnectMessage.cs" />
+    <Compile Include="SampleClientMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SenderService.cs" />
+    <Compile Include="SampleClientService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RabbitMqService\RabbitMqService.csproj">
-      <Project>{5AD7201C-D371-4AB5-A7F2-EE52A33DA4F8}</Project>
-      <Name>RabbitMqService</Name>
+    <Content Include="Client.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\sportsbook.worldtier\Igc.RabbitMq\Igc.RabbitMq.csproj">
+      <Project>{610FD571-F98D-4707-B445-CFCF63D4859B}</Project>
+      <Name>Igc.RabbitMq</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,40 +1,37 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Text;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Timers;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
+using Igc.RabbitMq;
+using Igc.RabbitMq.Consumption;
+using Igc.RabbitMq.Serialization;
+using ExchangeType = Igc.RabbitMq.ExchangeType;
 
 namespace RpcReceiver
 {
     class HeartbeatService
     {
-
-        private string _hostName = "localhost";
-        private string _userName = "guest";
-        private string _password = "guest";
-        private string _rpcQueueConnectName = "RpcQueueConnect";
         //private string _rpcQueuePingName = "RpcQueuePing";
-        private readonly IModel model;
 
-        private static readonly ConcurrentDictionary<string, SubscriberData> _clientPropertiesSubscriptions = new ConcurrentDictionary<string,SubscriberData>();
-        
-        const double interval60Minutes = 10 * 1000; // milliseconds to one minute
+        private static readonly ConcurrentDictionary<string, SubscriberData> _clientPropertiesSubscriptions = new ConcurrentDictionary<string, SubscriberData>();
+
+        private static IConsumerSettings consumerSettings;
 
         public HeartbeatService()
         {
 
-            ConnectionFactory connectionFactory = new ConnectionFactory();
-            connectionFactory.HostName = _hostName;
-            connectionFactory.UserName = _userName;
-            connectionFactory.Password = _password;
+            var heartbeatLoader = new XmlConsumerSettingsLoader("Consumer.xml");
+            consumerSettings = heartbeatLoader.Load();
+            var heartbeatConsumer = new Consumer(consumerSettings);
+            heartbeatConsumer.Start(HandleConnectMessage);
 
-            model = connectionFactory.CreateConnection().CreateModel();
 
-            Timer checkForTime = new Timer(interval60Minutes);
+
+            Timer checkForTime = new Timer(10 * 1000);
             checkForTime.Elapsed += checkForTime_Elapsed;
             checkForTime.Enabled = true;
-            
+
         }
 
         void checkForTime_Elapsed(object sender, ElapsedEventArgs e)
@@ -44,85 +41,53 @@ namespace RpcReceiver
                 SendPingMessageToQueue(_clientPropertiesSubscriptions[subs]);
             }
         }
-        public void ReceiveRpcConnectMessage()
-        {
-            model.BasicQos(0, 1, false);
-            QueueingBasicConsumer consumer = new QueueingBasicConsumer(model);
-            model.BasicConsume(_rpcQueueConnectName, false, consumer);
 
-            while (true)
-            {
-                BasicDeliverEventArgs deliveryArguments = consumer.Queue.Dequeue() as BasicDeliverEventArgs;
-                string message = Encoding.UTF8.GetString(deliveryArguments.Body);
-
-                //_clientSubscriptions.Add(message);
-
-                Console.WriteLine("Received message: " + message);
-                IBasicProperties replyBasicProperties = model.CreateBasicProperties();
-                replyBasicProperties.CorrelationId = deliveryArguments.BasicProperties.CorrelationId;
-
-                var guid = Guid.NewGuid();
-                var publishQueue = "publish_" +guid ;
-
-                model.QueueDeclare(publishQueue, false, false, true, null);
-                
-                
-
-                byte[] responseBytes = Encoding.UTF8.GetBytes(publishQueue);
-
-                model.BasicPublish("", deliveryArguments.BasicProperties.ReplyTo, replyBasicProperties, responseBytes);
-                model.BasicAck(deliveryArguments.DeliveryTag, false);
-                CreateConsumer(publishQueue,guid.ToString());
-                
-            }
-        } 
-
-        private void CreateConsumer(string publishQueue, string guid)
+        private void CreateConsumer(IPublisher publisher, string guid, string publishQueue)
         {
             var listenToQueue = "listen_" + guid;
-            model.QueueDeclare(listenToQueue, false, false, true, null);
-            var tmpConsumer = new EventingBasicConsumer(model);
-            model.BasicConsume(listenToQueue, true, tmpConsumer);
 
-            IBasicProperties basicProperties = model.CreateBasicProperties();
-            basicProperties.ReplyTo = listenToQueue;
+            var queue = new Queue(listenToQueue, false, false, true, string.Empty, null, null);
+            var thisConsumerSettings = new ConsumerSettings(consumerSettings.ConnectionSettings,
+                consumerSettings.ReconnectionAlgorithm, queue, null, 0, 1, 1);
+            var consumer = new Consumer(thisConsumerSettings);
+            consumer.Start(HandleHeartbeatMessage);
 
-            Timer timer = new Timer(500);
-            timer.Elapsed += (sender, e) => Timer_Elapsed (sender,e,listenToQueue);
-            
-            _clientPropertiesSubscriptions.TryAdd(basicProperties.ReplyTo, new SubscriberData { BasicProperties = basicProperties, Consumer = tmpConsumer, Timer = timer , PublishQueue = publishQueue});
-            tmpConsumer.Received += Consumer_Received;
+            Timer timer = new Timer(5000);
+            timer.Elapsed += (sender, e) => Timer_Elapsed(sender, e, listenToQueue);
+            var subData = new SubscriberData {ReplyTo = listenToQueue, Timer = timer, Publisher = publisher, PublishQueue = publishQueue};
+            _clientPropertiesSubscriptions.TryAdd(listenToQueue, subData);
+
         }
 
         private void SendPingMessageToQueue(SubscriberData subscriber)
         {
             string correlationId = Guid.NewGuid().ToString();
-            subscriber.BasicProperties.CorrelationId = correlationId;
 
-            Console.WriteLine("Sending ping for + " + subscriber.BasicProperties.ReplyTo + "with CorrelationID : " + correlationId);
+            Console.WriteLine("Sending ping for + " + subscriber.PublishQueue + "with CorrelationID : " + correlationId);
 
             subscriber.CorrelationId = correlationId;
-            //pingMessages[subscriber.BasicProperties.ReplyTo] = correlationId;
             subscriber.Timer.Enabled = true;
-            model.BasicPublish("", subscriber.PublishQueue, subscriber.BasicProperties, Encoding.UTF8.GetBytes("Ping"));
+
+            var publisher = subscriber.Publisher;
+            publisher.PublishNew("Ping",subscriber.PublishQueue , correlationId, subscriber.ReplyTo);
         }
 
-        private static void Consumer_Received(object sender, BasicDeliverEventArgs e)
-        {
-            if (!_clientPropertiesSubscriptions.ContainsKey(e.RoutingKey))
-            {
-                Console.Write("Not Found: " + e.RoutingKey);
-                return;
-            }
-            
-            var subscriber = _clientPropertiesSubscriptions[e.RoutingKey];
+        //private static void Consumer_Received(object sender, BasicDeliverEventArgs e)
+        //{
+        //    if (!_clientPropertiesSubscriptions.ContainsKey(e.RoutingKey))
+        //    {
+        //        Console.Write("Not Found: " + e.RoutingKey);
+        //        return;
+        //    }
 
-            if (e.BasicProperties == null || e.BasicProperties.CorrelationId != subscriber.CorrelationId) return;
+        //    var subscriber = _clientPropertiesSubscriptions[e.RoutingKey];
 
-            subscriber.Timer.Enabled = false;
-            string response = Encoding.UTF8.GetString(e.Body);
-            Console.WriteLine("Received " + response + " for : " + subscriber.CorrelationId + " with queue : " +subscriber.BasicProperties.ReplyTo);
-        }
+        //    if (e.BasicProperties == null || e.BasicProperties.CorrelationId != subscriber.CorrelationId) return;
+
+        //    subscriber.Timer.Enabled = false;
+        //    string response = Encoding.UTF8.GetString(e.Body);
+        //    Console.WriteLine("Received " + response + " for : " + subscriber.CorrelationId + " with queue : " + subscriber.BasicProperties.ReplyTo);
+        //}
 
         private static void Timer_Elapsed(object sender, ElapsedEventArgs e, string queueName)
         {
@@ -132,27 +97,74 @@ namespace RpcReceiver
             {
                 diedSub.Timer.Stop();
                 diedSub.Timer.Close();
-                Console.WriteLine("Consumer died: " + diedSub.BasicProperties.ReplyTo);
+                Console.WriteLine("Consumer died: " + diedSub.ReplyTo);
             }
 
             else
             {
                 Console.WriteLine("Could not be removed from queue");
             }
-            
+
             //throw new NotImplementedException();
+        }
+
+        private Task<IMessage> HandleHeartbeatMessage(IMessage data)
+        {
+            string routingKey = data.RoutingKey;
+            if (!_clientPropertiesSubscriptions.ContainsKey(routingKey))
+            {
+                Console.Write("Not Found: " + routingKey);
+                return Task.FromResult<IMessage>(null);
+            }
+
+            var subscriber = _clientPropertiesSubscriptions[routingKey];
+
+            if (data.CorrelationId != subscriber.CorrelationId)
+                return Task.FromResult<IMessage>(null);
+
+            subscriber.Timer.Enabled = false;
+            Console.WriteLine("Received {0} for : {1} with queue : {2}", data.Payload, subscriber.CorrelationId, data.RoutingKey);
+
+            return Task.FromResult(data);
+        }
+
+        private Task<IMessage> HandleConnectMessage(IMessage data)
+        {
+            string message = data.Payload;
+            Console.WriteLine("Received message: " + message);
+
+            var guid = Guid.NewGuid();
+            var publishQueue = "publish_" + guid;
+
+            var queue = new Queue(data.ReplyTo);
+
+            var exchange = new Exchange("", ExchangeType.Direct);
+            exchange.Queues = new List<Queue> { queue };
+
+            var publisherSettings = new PublisherSettings(consumerSettings.ConnectionSettings,
+                consumerSettings.ReconnectionAlgorithm, exchange, false);
+            var publisher = new Publisher(publisherSettings);
+            publisher.Start();
+
+            publisher.PublishNew(publishQueue, data.ReplyTo, data.CorrelationId, data.ReplyTo);
+
+            this.CreateConsumer(publisher, guid.ToString(), publishQueue);
+
+            return Task.FromResult(data);
         }
     }
 
     class SubscriberData
     {
-        public IBasicProperties BasicProperties { get; set; }
-        public EventingBasicConsumer Consumer { get; set; }
+        public string ReplyTo { get; set; }
+
         public Timer Timer { get; set; }
 
         public string PublishQueue { get; set; }
 
         public string CorrelationId { get; set; }
+
+        public IPublisher Publisher { get; set; }
 
     }
 }

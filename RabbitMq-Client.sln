@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RabbitMqService", "RabbitMqService\RabbitMqService.csproj", "{5AD7201C-D371-4AB5-A7F2-EE52A33DA4F8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleClient", "RpcSender\SampleClient.csproj", "{0065A934-7318-4E89-841C-6D9D12EA1217}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RpcSender", "RpcSender\RpcSender.csproj", "{0065A934-7318-4E89-841C-6D9D12EA1217}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Heartbeat", "RpcReceiver\Heartbeat.csproj", "{2AE1FF67-C71D-4B75-B8AC-FBE82072BD1D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RpcReceiver", "RpcReceiver\RpcReceiver.csproj", "{2AE1FF67-C71D-4B75-B8AC-FBE82072BD1D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Igc.RabbitMq", "..\..\sportsbook.worldtier\Igc.RabbitMq\Igc.RabbitMq.csproj", "{610FD571-F98D-4707-B445-CFCF63D4859B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,10 +15,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5AD7201C-D371-4AB5-A7F2-EE52A33DA4F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5AD7201C-D371-4AB5-A7F2-EE52A33DA4F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5AD7201C-D371-4AB5-A7F2-EE52A33DA4F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5AD7201C-D371-4AB5-A7F2-EE52A33DA4F8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0065A934-7318-4E89-841C-6D9D12EA1217}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0065A934-7318-4E89-841C-6D9D12EA1217}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0065A934-7318-4E89-841C-6D9D12EA1217}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -27,6 +23,10 @@ Global
 		{2AE1FF67-C71D-4B75-B8AC-FBE82072BD1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2AE1FF67-C71D-4B75-B8AC-FBE82072BD1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2AE1FF67-C71D-4B75-B8AC-FBE82072BD1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{610FD571-F98D-4707-B445-CFCF63D4859B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{610FD571-F98D-4707-B445-CFCF63D4859B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{610FD571-F98D-4707-B445-CFCF63D4859B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{610FD571-F98D-4707-B445-CFCF63D4859B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

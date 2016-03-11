@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ConsumerSettingsFileAdapter xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ConnectionSettings>
+    <Hostname>localhost</Hostname>
+    <Username>guest</Username>
+    <Password>guest</Password>
+    <RequestedHeartbeat>30</RequestedHeartbeat>
+    <AutomaticRecoveryEnabled>true</AutomaticRecoveryEnabled>
+  </ConnectionSettings>
+  <ReconnectionAlgorithm>
+    <Interval>3000</Interval>
+  </ReconnectionAlgorithm>
+  <Queue>
+    <Name>RpcQueueConnect</Name>
+    <Durable>false</Durable>
+    <Exclusive>false</Exclusive>
+    <AutoDelete>false</AutoDelete>
+    <RoutingKey />
+    <DeadLetterExchange/>
+    <MessageTTL xsi:nil="true" />
+  </Queue>
+  <PublisherSettingsFileAdapter>
+    <ConnectionSettings>
+      <Hostname>localhost</Hostname>
+      <Username>guest</Username>
+      <Password>guest</Password>
+      <RequestedHeartbeat>30</RequestedHeartbeat>
+      <AutomaticRecoveryEnabled>true</AutomaticRecoveryEnabled>
+    </ConnectionSettings>
+    <ReconnectionAlgorithm>
+      <Interval>3000</Interval>
+    </ReconnectionAlgorithm>
+    <Exchanges>
+      <Exchange>
+        <Name />
+        <ExchangeType>Direct</ExchangeType>
+        <Queues>
+          <Queue>
+            <Name>RpcQueueConnect</Name>
+            <Durable>false</Durable>
+            <Exclusive>false</Exclusive>
+            <AutoDelete>false</AutoDelete>
+            <RoutingKey />
+            <DeadLetterExchange/>
+            <MessageTTL xsi:nil="true" />
+          </Queue>
+        </Queues>
+        <Durable>false</Durable>
+        <DeadLetterExchange>false</DeadLetterExchange>
+      </Exchange>
+    </Exchanges>
+    <PublisherConfirm>true</PublisherConfirm>
+  </PublisherSettingsFileAdapter>
+  <MaxRetries>3</MaxRetries>
+  <PrefetchCountPerConsumer>0</PrefetchCountPerConsumer>
+  <PrefetchCountForQueue>1</PrefetchCountForQueue>
+</ConsumerSettingsFileAdapter>
