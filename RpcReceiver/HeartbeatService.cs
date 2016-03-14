@@ -69,7 +69,10 @@ namespace RpcReceiver
             subscriber.Timer.Enabled = true;
 
             var publisher = subscriber.Publisher;
-            publisher.PublishNew("Ping",subscriber.PublishQueue , correlationId, subscriber.ReplyTo);
+
+            var publishMessage = new PublishMessage<string>("Ping", subscriber.PublishQueue, false, "", correlationId,subscriber.ReplyTo);
+
+            publisher.PublishMessage(publishMessage);
         }
 
         //private static void Consumer_Received(object sender, BasicDeliverEventArgs e)
@@ -136,17 +139,19 @@ namespace RpcReceiver
             var guid = Guid.NewGuid();
             var publishQueue = "publish_" + guid;
 
-            var queue = new Queue(data.ReplyTo);
+
+
+            var queue = new Queue(data.ReplyTo, false, false, true, string.Empty, null, null);
 
             var exchange = new Exchange("", ExchangeType.Direct);
             exchange.Queues = new List<Queue> { queue };
 
-            var publisherSettings = new PublisherSettings(consumerSettings.ConnectionSettings,
-                consumerSettings.ReconnectionAlgorithm, exchange, false);
+            var publisherSettings = new PublisherSettings(consumerSettings.ConnectionSettings,consumerSettings.ReconnectionAlgorithm, exchange, false,SerializationType.None, false);
             var publisher = new Publisher(publisherSettings);
             publisher.Start();
 
-            publisher.PublishNew(publishQueue, data.ReplyTo, data.CorrelationId, data.ReplyTo);
+            var publishMessage = new PublishMessage<string>(publishQueue, data.ReplyTo, false, "", data.CorrelationId, data.ReplyTo);
+            publisher.PublishMessage(publishMessage);
 
             this.CreateConsumer(publisher, guid.ToString(), publishQueue);
 
