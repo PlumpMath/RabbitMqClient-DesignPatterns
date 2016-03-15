@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Igc.RabbitMq", "..\..\sport
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Heartbeat.Web", "Heartbeat.Web\Heartbeat.Web.csproj", "{3CB014CD-012C-41B4-8F68-E77F965F724B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Heartbeat.Contracts", "Heartbeat.Contracts\Heartbeat.Contracts.csproj", "{7C757F75-D74A-418B-8206-F53F64CB434C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{3CB014CD-012C-41B4-8F68-E77F965F724B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3CB014CD-012C-41B4-8F68-E77F965F724B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3CB014CD-012C-41B4-8F68-E77F965F724B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C757F75-D74A-418B-8206-F53F64CB434C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C757F75-D74A-418B-8206-F53F64CB434C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C757F75-D74A-418B-8206-F53F64CB434C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C757F75-D74A-418B-8206-F53F64CB434C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

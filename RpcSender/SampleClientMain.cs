@@ -7,18 +7,13 @@ namespace RpcSender
     {
         static void Main(string[] args)
         {
-            
-            //messagingService.SetUpExchangeAndQueueForRpcDemo(model);
-            SampleClientService s = new SampleClientService();
-            //s.SetUpExchangeAndQueueForRpcDemo();
+            var s = new SampleClientService();
             RunRpcMessageDemo(s);
         }
 
         private static void RunRpcMessageDemo(SampleClientService messagingService)
         {
-            messagingService.SendRpcConnectMessageToQueue(Environment.MachineName + "_" +Process.GetCurrentProcess().Id);
-           //messagingService.ReceiveRpcPongMessage();
-
+            messagingService.SendRpcConnectMessageToQueue();
         }
     }
 }

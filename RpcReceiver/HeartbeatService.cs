@@ -1,61 +1,83 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Configuration;
 using System.Threading.Tasks;
 using System.Timers;
+using Heartbeat.Contracts;
 using Igc.RabbitMq;
 using Igc.RabbitMq.Consumption;
 using Igc.RabbitMq.Serialization;
+using Igc.Sports.Json;
 using ExchangeType = Igc.RabbitMq.ExchangeType;
 
 namespace RpcReceiver
 {
     class HeartbeatService
     {
-        //private string _rpcQueuePingName = "RpcQueuePing";
-
-        private static readonly ConcurrentDictionary<string, SubscriberData> _clientPropertiesSubscriptions = new ConcurrentDictionary<string, SubscriberData>();
-
-        private static IConsumerSettings consumerSettings;
+        private static readonly ConcurrentDictionary<string, SubscriberData> ClientPropertiesSubscriptions = new ConcurrentDictionary<string, SubscriberData>();
+        private static IConsumerSettings _consumerSettings;
+        private readonly NameValueCollection _appSettings = ConfigurationManager.AppSettings;
+        private static ConcurrentDictionary<string, HashSet<String>> GroupApps = new ConcurrentDictionary<string, HashSet<string>>();
 
         public HeartbeatService()
         {
-
+            GroupApps = new ConcurrentDictionary<string, HashSet<string>>();
             var heartbeatLoader = new XmlConsumerSettingsLoader("Consumer.xml");
-            consumerSettings = heartbeatLoader.Load();
-            var heartbeatConsumer = new Consumer(consumerSettings);
+            _consumerSettings = heartbeatLoader.Load();
+            var heartbeatConsumer = new Consumer(_consumerSettings);
             heartbeatConsumer.Start(HandleConnectMessage);
 
 
 
-            Timer checkForTime = new Timer(10 * 1000);
-            checkForTime.Elapsed += checkForTime_Elapsed;
-            checkForTime.Enabled = true;
+            Timer pingTimer = new Timer(Convert.ToInt32(_appSettings["PingFrequency"]) * 1000);
+            pingTimer.Elapsed += PingClientsEventHandler;
+            pingTimer.Enabled = true;
 
         }
 
-        void checkForTime_Elapsed(object sender, ElapsedEventArgs e)
+        private void PingClientsEventHandler(object sender, ElapsedEventArgs e)
         {
-            foreach (var subs in _clientPropertiesSubscriptions.Keys)
+            foreach (var subs in ClientPropertiesSubscriptions.Keys)
             {
-                SendPingMessageToQueue(_clientPropertiesSubscriptions[subs]);
+                SendPingMessageToQueue(ClientPropertiesSubscriptions[subs]);
             }
         }
 
-        private void CreateConsumer(IPublisher publisher, string guid, string publishQueue)
+        private void CreateConsumer(IPublisher publisher, string guid, string publishQueue, ConnectMessage connectMessage)
         {
             var listenToQueue = "listen_" + guid;
 
             var queue = new Queue(listenToQueue, false, false, true, string.Empty, null, null);
-            var thisConsumerSettings = new ConsumerSettings(consumerSettings.ConnectionSettings,
-                consumerSettings.ReconnectionAlgorithm, queue, null, 0, 1, 1);
+            var thisConsumerSettings = new ConsumerSettings(_consumerSettings.ConnectionSettings,
+                _consumerSettings.ReconnectionAlgorithm, queue, null, 0, 1, 1);
             var consumer = new Consumer(thisConsumerSettings);
             consumer.Start(HandleHeartbeatMessage);
 
-            Timer timer = new Timer(5000);
-            timer.Elapsed += (sender, e) => Timer_Elapsed(sender, e, listenToQueue);
-            var subData = new SubscriberData {ReplyTo = listenToQueue, Timer = timer, Publisher = publisher, PublishQueue = publishQueue};
-            _clientPropertiesSubscriptions.TryAdd(listenToQueue, subData);
+            Timer applicationTimoutTimer = new Timer(connectMessage.ApplicationTimeout * 1000);
+            applicationTimoutTimer.Elapsed += (sender, e) => ApplicationTimeoutEventHandler(sender, e, listenToQueue);
+            var subData = new SubscriberData
+            {
+                ConnectionData = connectMessage,
+                CurrentApplicationRetries = connectMessage.ApplicationRetries,
+                CurrentGroupRetries = connectMessage.GroupRetries,
+                ReplyTo = listenToQueue,
+                Timer = applicationTimoutTimer,
+                Publisher = publisher,
+                PublishQueue = publishQueue
+            };
+            ClientPropertiesSubscriptions.TryAdd(listenToQueue, subData);
+
+            //Register the client to the Group
+            if (GroupApps.ContainsKey(connectMessage.GroupName))
+            {
+                GroupApps[connectMessage.GroupName].Add(connectMessage.ApplicationName);
+            }
+            else
+            {
+                GroupApps.TryAdd(connectMessage.GroupName, new HashSet<string> { connectMessage.ApplicationName });
+            }
 
         }
 
@@ -70,62 +92,93 @@ namespace RpcReceiver
 
             var publisher = subscriber.Publisher;
 
-            var publishMessage = new PublishMessage<string>("Ping", subscriber.PublishQueue, false, "", correlationId,subscriber.ReplyTo);
+            var publishMessage = new PublishMessage<string>("Ping", subscriber.PublishQueue, false, "", correlationId, subscriber.ReplyTo);
 
             publisher.PublishMessage(publishMessage);
         }
 
-        //private static void Consumer_Received(object sender, BasicDeliverEventArgs e)
-        //{
-        //    if (!_clientPropertiesSubscriptions.ContainsKey(e.RoutingKey))
-        //    {
-        //        Console.Write("Not Found: " + e.RoutingKey);
-        //        return;
-        //    }
 
-        //    var subscriber = _clientPropertiesSubscriptions[e.RoutingKey];
-
-        //    if (e.BasicProperties == null || e.BasicProperties.CorrelationId != subscriber.CorrelationId) return;
-
-        //    subscriber.Timer.Enabled = false;
-        //    string response = Encoding.UTF8.GetString(e.Body);
-        //    Console.WriteLine("Received " + response + " for : " + subscriber.CorrelationId + " with queue : " + subscriber.BasicProperties.ReplyTo);
-        //}
-
-        private static void Timer_Elapsed(object sender, ElapsedEventArgs e, string queueName)
+        private static void ApplicationTimeoutEventHandler(object sender, ElapsedEventArgs e, string queueName)
         {
-            SubscriberData diedSub;
-            Console.WriteLine("Removed queue : " + queueName);
-            if (_clientPropertiesSubscriptions.TryRemove(queueName, out diedSub))
+            if (ClientPropertiesSubscriptions.ContainsKey(queueName))
             {
-                diedSub.Timer.Stop();
-                diedSub.Timer.Close();
-                Console.WriteLine("Consumer died: " + diedSub.ReplyTo);
+                var currentSub = ClientPropertiesSubscriptions[queueName];
+
+                if (currentSub.CurrentApplicationRetries == 1)
+                {
+                    Console.WriteLine("Consumer died: " + currentSub.ConnectionData.ApplicationName);
+
+                    SubscriberData diedSub;
+                    if (ClientPropertiesSubscriptions.TryRemove(queueName, out diedSub))
+                    {
+                        diedSub.Timer.Stop();
+                        diedSub.Timer.Close();
+                        Console.WriteLine("Consumer died: " + diedSub.ReplyTo);
+
+
+                        if (!GroupApps.ContainsKey(currentSub.ConnectionData.GroupName))
+                        {
+                            Console.WriteLine("Group Died ");
+                            //Throw no consumer EventHandler 
+                        }
+                        else
+                        {
+                            GroupApps[currentSub.ConnectionData.GroupName].Remove(
+                                currentSub.ConnectionData.ApplicationName);
+
+                            if (GroupApps[currentSub.ConnectionData.GroupName].Count == 0 && currentSub.CurrentGroupRetries == 1)
+                            {
+                                HashSet<string> dummy;
+                                GroupApps.TryRemove(currentSub.ConnectionData.GroupName, out dummy);
+                                Console.WriteLine("Group Died ");
+                                //Throw no consumer EventHandler 
+                            }
+                            else if (GroupApps[currentSub.ConnectionData.GroupName].Count == 0)
+                            {
+                                currentSub.CurrentGroupRetries--;
+                                Console.WriteLine("Reducing the number of group retires remaining is : {0}", currentSub.CurrentGroupRetries);
+                            }
+                        }
+                    }
+
+                    else
+                    {
+                        Console.WriteLine("No of retries exceded and consumer died but could not remove it from queue");
+                    }
+                }
+                else
+                {
+                    currentSub.Timer.Enabled = false;
+                    currentSub.CurrentApplicationRetries--;
+                    Console.WriteLine("Reducing Retries for queue: {0}, Remaining retriers are : {1}", queueName, currentSub.CurrentApplicationRetries);
+                } 
             }
 
             else
             {
-                Console.WriteLine("Could not be removed from queue");
+                Console.WriteLine("Queue {0} already deleted", queueName);
             }
 
-            //throw new NotImplementedException();
         }
 
         private Task<IMessage> HandleHeartbeatMessage(IMessage data)
         {
             string routingKey = data.RoutingKey;
-            if (!_clientPropertiesSubscriptions.ContainsKey(routingKey))
+            if (!ClientPropertiesSubscriptions.ContainsKey(routingKey))
             {
                 Console.Write("Not Found: " + routingKey);
                 return Task.FromResult<IMessage>(null);
             }
 
-            var subscriber = _clientPropertiesSubscriptions[routingKey];
+            var subscriber = ClientPropertiesSubscriptions[routingKey];
 
             if (data.CorrelationId != subscriber.CorrelationId)
                 return Task.FromResult<IMessage>(null);
 
             subscriber.Timer.Enabled = false;
+            //reset the retries
+            subscriber.CurrentApplicationRetries = subscriber.ConnectionData.ApplicationRetries;
+            subscriber.CurrentGroupRetries = subscriber.ConnectionData.GroupRetries;
             Console.WriteLine("Received {0} for : {1} with queue : {2}", data.Payload, subscriber.CorrelationId, data.RoutingKey);
 
             return Task.FromResult(data);
@@ -133,27 +186,27 @@ namespace RpcReceiver
 
         private Task<IMessage> HandleConnectMessage(IMessage data)
         {
-            string message = data.Payload;
-            Console.WriteLine("Received message: " + message);
+            var connectMessage = JsonSerialisation.DeserializeFromString<ConnectMessage>(data.Payload, true);
+            Console.WriteLine("Received message for Application:{0}" , connectMessage.ApplicationName);
 
             var guid = Guid.NewGuid();
             var publishQueue = "publish_" + guid;
-
-
 
             var queue = new Queue(data.ReplyTo, false, false, true, string.Empty, null, null);
 
             var exchange = new Exchange("", ExchangeType.Direct);
             exchange.Queues = new List<Queue> { queue };
 
-            var publisherSettings = new PublisherSettings(consumerSettings.ConnectionSettings,consumerSettings.ReconnectionAlgorithm, exchange, false,SerializationType.None, false);
+            var publisherSettings = new PublisherSettings(_consumerSettings.ConnectionSettings, _consumerSettings.ReconnectionAlgorithm, exchange, false, SerializationType.None, false);
             var publisher = new Publisher(publisherSettings);
             publisher.Start();
+
+            Console.WriteLine("Publishing to queue {0} data {1}", data.ReplyTo, publishQueue);
 
             var publishMessage = new PublishMessage<string>(publishQueue, data.ReplyTo, false, "", data.CorrelationId, data.ReplyTo);
             publisher.PublishMessage(publishMessage);
 
-            this.CreateConsumer(publisher, guid.ToString(), publishQueue);
+            CreateConsumer(publisher, guid.ToString(), publishQueue, connectMessage);
 
             return Task.FromResult(data);
         }
@@ -161,6 +214,11 @@ namespace RpcReceiver
 
     class SubscriberData
     {
+        public ConnectMessage ConnectionData { get; set; }
+
+        public int CurrentApplicationRetries { get; set; }
+        public int CurrentGroupRetries { get; set; }
+
         public string ReplyTo { get; set; }
 
         public Timer Timer { get; set; }

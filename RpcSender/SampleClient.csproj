@@ -38,6 +38,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -47,7 +48,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConnectMessage.cs" />
     <Compile Include="SampleClientMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SampleClientService.cs" />
@@ -65,6 +65,10 @@
     <ProjectReference Include="..\..\..\sportsbook.worldtier\Igc.RabbitMq\Igc.RabbitMq.csproj">
       <Project>{610FD571-F98D-4707-B445-CFCF63D4859B}</Project>
       <Name>Igc.RabbitMq</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Heartbeat.Contracts\Heartbeat.Contracts.csproj">
+      <Project>{7c757f75-d74a-418b-8206-f53f64cb434c}</Project>
+      <Name>Heartbeat.Contracts</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -4,17 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{2AE1FF67-C71D-4B75-B8AC-FBE82072BD1D}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{7C757F75-D74A-418B-8206-F53F64CB434C}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RpcReceiver</RootNamespace>
-    <AssemblyName>RpcReceiver</AssemblyName>
+    <RootNamespace>Heartbeat.Contracts</RootNamespace>
+    <AssemblyName>Heartbeat.Contracts</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -24,7 +23,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -33,15 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Igc.Sports.Json">
-      <HintPath>..\..\..\sportsbook.worldtier\Igc.Json\bin\Debug\Igc.Sports.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="RabbitMQ.Client, Version=3.6.1.0, Culture=neutral, PublicKeyToken=89e7d7c5feba84ce, processorArchitecture=MSIL">
-      <HintPath>..\packages\RabbitMQ.Client.3.6.1\lib\net45\RabbitMQ.Client.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -51,30 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HeartBeatMain.cs" />
+    <Compile Include="ConnectMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="HeartbeatService.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\sportsbook.worldtier\Igc.RabbitMq\Igc.RabbitMq.csproj">
-      <Project>{610fd571-f98d-4707-b445-cfcf63d4859b}</Project>
-      <Name>Igc.RabbitMq</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Heartbeat.Contracts\Heartbeat.Contracts.csproj">
-      <Project>{7c757f75-d74a-418b-8206-f53f64cb434c}</Project>
-      <Name>Heartbeat.Contracts</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Consumer.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
