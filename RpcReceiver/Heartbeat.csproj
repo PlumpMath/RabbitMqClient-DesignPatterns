@@ -33,6 +33,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Igc.Sports.Json">
       <HintPath>..\..\..\sportsbook.worldtier\Igc.Json\bin\Debug\Igc.Sports.Json.dll</HintPath>
     </Reference>
@@ -41,6 +49,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -51,9 +60,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entities\Application.cs" />
+    <Compile Include="Entities\Group.cs" />
+    <Compile Include="HeartbeatContext.cs" />
+    <Compile Include="HeartbeatDtoMapper.cs" />
     <Compile Include="HeartBeatMain.cs" />
+    <Compile Include="HeartbeatRepository.cs" />
+    <Compile Include="IHeartbeatRepository.cs" />
+    <Compile Include="Mapping\ApplicationMapping.cs" />
+    <Compile Include="Mapping\GroupMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="HeartbeatService.cs" />
+    <Compile Include="ApplicationInfoDto.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -75,6 +93,9 @@
     <Content Include="Consumer.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="data\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
