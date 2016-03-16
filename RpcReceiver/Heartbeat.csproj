@@ -60,15 +60,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Entities\Application.cs" />
-    <Compile Include="Entities\Group.cs" />
-    <Compile Include="HeartbeatContext.cs" />
-    <Compile Include="HeartbeatDtoMapper.cs" />
     <Compile Include="HeartBeatMain.cs" />
-    <Compile Include="HeartbeatRepository.cs" />
-    <Compile Include="IHeartbeatRepository.cs" />
-    <Compile Include="Mapping\ApplicationMapping.cs" />
-    <Compile Include="Mapping\GroupMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="HeartbeatService.cs" />
     <Compile Include="ApplicationInfoDto.cs" />
@@ -96,6 +88,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="data\" />
+    <Folder Include="Entities\" />
+    <Folder Include="Mapping\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

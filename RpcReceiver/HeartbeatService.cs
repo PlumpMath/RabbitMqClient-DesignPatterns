@@ -105,7 +105,6 @@ namespace RpcReceiver
 
             };
             ClientPropertiesSubscriptions.TryAdd(listenToQueue, subData);
-            var app = HeartbeatDtoMapper.ApplicationMapper(subData);
 
             //Register the client to the Group
             if (_groupApps.ContainsKey(connectMessage.GroupName))
