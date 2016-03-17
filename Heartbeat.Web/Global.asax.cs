@@ -12,6 +12,12 @@ namespace Heartbeat.Web
         protected void Application_Start()
         {
             GlobalConfiguration.Configure(WebApiConfig.Register);
+            HeartbeatService.Start();
+        }
+
+        protected void Application_End()
+        {
+            HeartbeatService.Stop();
         }
     }
 }

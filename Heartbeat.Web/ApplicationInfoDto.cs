@@ -1,9 +1,6 @@
 using System;
-using System.Timers;
-using Heartbeat.Contracts;
-using Igc.RabbitMq;
 
-namespace RpcReceiver
+namespace Heartbeat.Web
 {
     [Serializable]
     public class ApplicationInfoDto

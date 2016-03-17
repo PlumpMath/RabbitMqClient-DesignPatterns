@@ -1,10 +1,4 @@
-﻿
-
-using System;
-using System.Configuration;
-using System.Runtime.CompilerServices;
-
-namespace RpcReceiver
+﻿namespace RpcReceiver
 {
     class HeartBeatMain
     {
